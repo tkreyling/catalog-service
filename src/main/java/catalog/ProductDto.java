@@ -3,6 +3,6 @@ package catalog;
 import lombok.Value;
 
 @Value
-public class GetProductDto {
+public class ProductDto {
     private String name;
 }

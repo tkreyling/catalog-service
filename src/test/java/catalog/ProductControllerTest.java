@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.HttpHeaders.LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -37,7 +38,7 @@ public class ProductControllerTest {
 
     @Test
     public void theCatalogRetainsANewProduct() throws Exception {
-        CreateProductDto createRequest = new CreateProductDto("New Product");
+        ProductDto createRequest = new ProductDto("New Product");
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -54,11 +55,42 @@ public class ProductControllerTest {
         MockHttpServletResponse getResponse = mvc.perform(
                 get(productUrl)
         )
-                .andExpect(status().is2xxSuccessful())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
 
-        GetProductDto getProductDto = objectMapper.readValue(getResponse.getContentAsString(), GetProductDto.class);
-        assertEquals("New Product", getProductDto.getName());
+        ProductDto productDto = objectMapper.readValue(getResponse.getContentAsString(), ProductDto.class);
+        assertEquals("New Product", productDto.getName());
+    }
+
+    @Test
+    public void anExistingProductCanBeUpdated() throws Exception {
+        ProductDto createRequest = new ProductDto("old name");
+
+        MockHttpServletResponse createResponse = mvc.perform(
+                post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(createRequest))
+        )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        String productUrl = createResponse.getHeader(LOCATION);
+        assertNotNull(productUrl);
+
+        ProductDto updateRequest = new ProductDto("new name");
+
+        MockHttpServletResponse updateResponse = mvc.perform(
+                put(productUrl)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(updateRequest))
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        ProductDto productDto = objectMapper.readValue(updateResponse.getContentAsString(), ProductDto.class);
+        assertEquals("new name", productDto.getName());
     }
 }

@@ -18,29 +18,47 @@ public class ProductController {
     private final ProductRepository productRepository;
 
     @RequestMapping(method = RequestMethod.POST)
-    public HttpEntity<?> createProduct(@RequestBody @Valid CreateProductDto createProductDto) {
-        Product product = mapRequestToDomainObject(createProductDto);
+    public HttpEntity<?> createProduct(@RequestBody @Valid ProductDto productDto) {
+        Product product = mapRequestToDomainObject(productDto);
 
         Product savedProduct = productRepository.save(product);
 
         return created(URI.create("/products/" + savedProduct.getId())).build();
     }
 
-    private Product mapRequestToDomainObject(CreateProductDto createProductDto) {
+    private Product mapRequestToDomainObject(ProductDto productDto) {
         Product product = new Product();
-        product.setName(createProductDto.getName());
+        product.setName(productDto.getName());
+        return product;
+    }
+
+    @RequestMapping(value = "{productId}", method = RequestMethod.PUT)
+    public HttpEntity<ProductDto> updateProduct(
+            @PathVariable long productId,
+            @RequestBody @Valid ProductDto productDto
+    ) {
+        return productRepository.findById(productId)
+                .map(product -> updateAttributes(product, productDto))
+                .map(productRepository::save)
+                .map(this::mapDomainObjectToResponse)
+                .map(ResponseEntity::ok)
+                .orElse(notFound().build());
+    }
+
+    private Product updateAttributes(Product product, ProductDto productDto) {
+        product.setName(productDto.getName());
         return product;
     }
 
     @RequestMapping(value = "{productId}", method = RequestMethod.GET)
-    public HttpEntity<GetProductDto> getProduct(@PathVariable long productId) {
+    public HttpEntity<ProductDto> getProduct(@PathVariable long productId) {
         return productRepository.findById(productId)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private GetProductDto mapDomainObjectToResponse(Product product) {
-        return new GetProductDto(product.getName());
+    private ProductDto mapDomainObjectToResponse(Product product) {
+        return new ProductDto(product.getName());
     }
 }
