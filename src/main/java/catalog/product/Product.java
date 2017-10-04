@@ -1,4 +1,4 @@
-package catalog;
+package catalog.product;
 
 import lombok.Data;
 
