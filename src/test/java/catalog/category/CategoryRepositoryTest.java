@@ -22,10 +22,26 @@ public class CategoryRepositoryTest {
         newCategory.setName("New Category");
 
         Category savedCategory = categoryRepository.save(newCategory);
-        long categoryCount = categoryRepository.count();
 
         assertNotNull(savedCategory.getId());
-        assertEquals(1, categoryCount);
+    }
+
+    @Test
+    public void aCategoryCanBeNestedInAnExistingCategory() {
+        Category existingCategory = new Category();
+        existingCategory.setName("Existing Category");
+
+        existingCategory = categoryRepository.save(existingCategory);
+
+        Category newCategory = new Category();
+        newCategory.setName("New Category");
+        newCategory.setParentCategory(existingCategory);
+
+        Category savedCategory = categoryRepository.save(newCategory);
+
+        assertNotNull(savedCategory.getId());
+        assertNotNull(savedCategory.getParentCategory().getId());
+        assertEquals("Existing Category", savedCategory.getParentCategory().getName());
     }
 
 }
