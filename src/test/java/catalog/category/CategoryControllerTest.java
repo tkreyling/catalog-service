@@ -2,6 +2,7 @@ package catalog.category;
 
 import catalog.Application;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Value;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +13,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.springframework.http.HttpHeaders.LOCATION;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -40,22 +37,12 @@ public class CategoryControllerTest {
 
     @Test
     public void theCatalogRetainsANewCategory() throws Exception {
-        CategoryRequest createRequest = new CategoryRequest("New Category");
+        CreateCategoryResult createResponse = createCategory("New Category");
 
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/categories")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
-
-        String categoryUrl = createResponse.getHeader(LOCATION);
-        assertNotNull(categoryUrl);
+        assertNotNull(createResponse.location);
 
         MockHttpServletResponse getResponse = mvc.perform(
-                get(categoryUrl)
+                get(createResponse.location)
         )
                 .andExpect(status().isOk())
                 .andReturn()
@@ -69,24 +56,14 @@ public class CategoryControllerTest {
 
     @Test
     public void anExistingCategoryCanBeUpdated() throws Exception {
-        CategoryRequest createRequest = new CategoryRequest("old name");
+        CreateCategoryResult createResponse = createCategory("old name");
 
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/categories")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
-
-        String categoryUrl = createResponse.getHeader(LOCATION);
-        assertNotNull(categoryUrl);
+        assertNotNull(createResponse.location);
 
         CategoryRequest updateRequest = new CategoryRequest("new name");
 
         MockHttpServletResponse updateResponse = mvc.perform(
-                put(categoryUrl)
+                put(createResponse.location)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(updateRequest))
         )
@@ -101,7 +78,20 @@ public class CategoryControllerTest {
 
     @Test
     public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
-        CategoryRequest createRequest = new CategoryRequest("Existing Category");
+        CreateCategoryResult createResponse = createCategory("Existing Category");
+
+        assertNotEquals(0, createResponse.response.getId());
+
+    }
+
+    @Value
+    private static class CreateCategoryResult {
+        CategoryResponse response;
+        String location;
+    }
+
+    private CreateCategoryResult createCategory(String name) throws Exception {
+        CategoryRequest createRequest = new CategoryRequest(name);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/categories")
@@ -114,7 +104,7 @@ public class CategoryControllerTest {
 
         CategoryResponse categoryResponse = objectMapper.readValue(
                 createResponse.getContentAsString(), CategoryResponse.class);
-        assertNotEquals(0, categoryResponse.getId());
 
+        return new CreateCategoryResult(categoryResponse, createResponse.getHeader(LOCATION));
     }
 }
