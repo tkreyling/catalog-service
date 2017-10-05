@@ -2,10 +2,8 @@ package catalog.category;
 
 import lombok.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,5 +57,23 @@ public class CategoryService {
                         .map(subCategory -> mapDomainObjectToResponse(subCategory, emptyList()))
                         .collect(toList())
         );
+    }
+
+    public List<CategoryResponse> loadCategoryPath(Long categoryId) {
+        List<CategoryResponse> categoryPath = new ArrayList<>();
+
+        while (true) {
+            categoryId = categoryRepository.findById(categoryId)
+                    .map(category -> {
+                        categoryPath.add(0, mapDomainObjectToResponse(category, emptyList()));
+                        return category;
+                    })
+                    .map(Category::getParentCategoryId)
+                    .orElse(null);
+
+            if (categoryId == null) break;
+        }
+
+        return categoryPath;
     }
 }

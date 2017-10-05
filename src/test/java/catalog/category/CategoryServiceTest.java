@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -45,6 +49,19 @@ public class CategoryServiceTest {
         CategoryResponse reloadedExistingCategory = getCategory(existingCategory.getId());
 
         assertEquals(1, reloadedExistingCategory.getSubCategories().size());
+    }
+
+    @Test
+    public void theCategoryPathIsTheListOfAllParentCategories() {
+        CategoryResponse root = createCategory("Root", null);
+        CategoryResponse subCategory = createCategory("Sub Category", root.getId());
+        CategoryResponse subSubCategory = createCategory("Sub Sub Category", subCategory.getId());
+
+        List<CategoryResponse> categoryPath = categoryService.loadCategoryPath(subSubCategory.getId());
+
+        List<String> categoryNames = categoryPath.stream().map(CategoryResponse::getName).collect(toList());
+
+        assertEquals(asList("Root", "Sub Category", "Sub Sub Category"), categoryNames);
     }
 
     private CategoryResponse createCategory(String name, Long parentCategoryId) {
