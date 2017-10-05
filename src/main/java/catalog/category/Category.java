@@ -13,6 +13,5 @@ public class Category {
 
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Category parentCategory;
+    private Long parentCategoryId;
 }

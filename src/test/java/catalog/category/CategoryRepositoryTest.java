@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -31,17 +33,17 @@ public class CategoryRepositoryTest {
         Category existingCategory = new Category();
         existingCategory.setName("Existing Category");
 
-        existingCategory = categoryRepository.save(existingCategory);
+        categoryRepository.save(existingCategory);
 
         Category newCategory = new Category();
         newCategory.setName("New Category");
-        newCategory.setParentCategory(existingCategory);
+        newCategory.setParentCategoryId(existingCategory.getId());
 
-        Category savedCategory = categoryRepository.save(newCategory);
+        categoryRepository.save(newCategory);
 
-        assertNotNull(savedCategory.getId());
-        assertNotNull(savedCategory.getParentCategory().getId());
-        assertEquals("Existing Category", savedCategory.getParentCategory().getName());
+        List<Category> subCategories = categoryRepository.findByParentCategoryId(existingCategory.getId());
+
+        assertEquals(1, subCategories.size());
     }
 
 }
