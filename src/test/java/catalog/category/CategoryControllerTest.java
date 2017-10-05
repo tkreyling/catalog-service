@@ -98,4 +98,23 @@ public class CategoryControllerTest {
                 updateResponse.getContentAsString(), CategoryResponse.class);
         assertEquals("new name", categoryResponse.getName());
     }
+
+    @Test
+    public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
+        CategoryRequest createRequest = new CategoryRequest("Existing Category");
+
+        MockHttpServletResponse createResponse = mvc.perform(
+                post("/categories")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(createRequest))
+        )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        CategoryResponse categoryResponse = objectMapper.readValue(
+                createResponse.getContentAsString(), CategoryResponse.class);
+        assertNotEquals(0, categoryResponse.getId());
+
+    }
 }

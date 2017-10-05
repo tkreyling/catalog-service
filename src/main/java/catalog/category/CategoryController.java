@@ -23,7 +23,8 @@ public class CategoryController {
 
         Category savedCategory = categoryRepository.save(category);
 
-        return created(URI.create("/categories/" + savedCategory.getId())).build();
+        return created(URI.create("/categories/" + savedCategory.getId()))
+                .body(mapDomainObjectToResponse(savedCategory));
     }
 
     private Category mapRequestToDomainObject(CategoryRequest categoryRequest) {
