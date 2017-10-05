@@ -18,35 +18,35 @@ public class CategoryController {
     private final CategoryRepository categoryRepository;
 
     @RequestMapping(method = RequestMethod.POST)
-    public HttpEntity<?> createCategory(@RequestBody @Valid CategoryDto categoryDto) {
-        Category category = mapRequestToDomainObject(categoryDto);
+    public HttpEntity<?> createCategory(@RequestBody @Valid CategoryRequest categoryRequest) {
+        Category category = mapRequestToDomainObject(categoryRequest);
 
         Category savedCategory = categoryRepository.save(category);
 
         return created(URI.create("/categories/" + savedCategory.getId())).build();
     }
 
-    private Category mapRequestToDomainObject(CategoryDto categoryDto) {
+    private Category mapRequestToDomainObject(CategoryRequest categoryRequest) {
         Category category = new Category();
-        category.setName(categoryDto.getName());
+        category.setName(categoryRequest.getName());
         return category;
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.PUT)
     public HttpEntity<CategoryResponse> updateCategory(
             @PathVariable long categoryId,
-            @RequestBody @Valid CategoryDto categoryDto
+            @RequestBody @Valid CategoryRequest categoryRequest
     ) {
         return categoryRepository.findById(categoryId)
-                .map(category -> updateAttributes(category, categoryDto))
+                .map(category -> updateAttributes(category, categoryRequest))
                 .map(categoryRepository::save)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private Category updateAttributes(Category category, CategoryDto categoryDto) {
-        category.setName(categoryDto.getName());
+    private Category updateAttributes(Category category, CategoryRequest categoryRequest) {
+        category.setName(categoryRequest.getName());
         return category;
     }
 

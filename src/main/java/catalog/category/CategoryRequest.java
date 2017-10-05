@@ -3,6 +3,6 @@ package catalog.category;
 import lombok.Value;
 
 @Value
-public class CategoryDto {
+public class CategoryRequest {
     private String name;
 }

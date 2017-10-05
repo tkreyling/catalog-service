@@ -39,7 +39,7 @@ public class CategoryControllerTest {
 
     @Test
     public void theCatalogRetainsANewCategory() throws Exception {
-        CategoryDto createRequest = new CategoryDto("New Category");
+        CategoryRequest createRequest = new CategoryRequest("New Category");
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/categories")
@@ -67,7 +67,7 @@ public class CategoryControllerTest {
 
     @Test
     public void anExistingCategoryCanBeUpdated() throws Exception {
-        CategoryDto createRequest = new CategoryDto("old name");
+        CategoryRequest createRequest = new CategoryRequest("old name");
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/categories")
@@ -81,7 +81,7 @@ public class CategoryControllerTest {
         String categoryUrl = createResponse.getHeader(LOCATION);
         assertNotNull(categoryUrl);
 
-        CategoryDto updateRequest = new CategoryDto("new name");
+        CategoryRequest updateRequest = new CategoryRequest("new name");
 
         MockHttpServletResponse updateResponse = mvc.perform(
                 put(categoryUrl)
