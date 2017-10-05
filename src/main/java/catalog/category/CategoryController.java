@@ -33,7 +33,7 @@ public class CategoryController {
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.PUT)
-    public HttpEntity<CategoryDto> updateCategory(
+    public HttpEntity<CategoryResponse> updateCategory(
             @PathVariable long categoryId,
             @RequestBody @Valid CategoryDto categoryDto
     ) {
@@ -51,14 +51,14 @@ public class CategoryController {
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.GET)
-    public HttpEntity<CategoryDto> getCategory(@PathVariable long categoryId) {
+    public HttpEntity<CategoryResponse> getCategory(@PathVariable long categoryId) {
         return categoryRepository.findById(categoryId)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private CategoryDto mapDomainObjectToResponse(Category category) {
-        return new CategoryDto(category.getName());
+    private CategoryResponse mapDomainObjectToResponse(Category category) {
+        return new CategoryResponse(category.getName());
     }
 }

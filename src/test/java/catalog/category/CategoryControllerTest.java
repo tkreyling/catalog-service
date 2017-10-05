@@ -60,8 +60,9 @@ public class CategoryControllerTest {
                 .andReturn()
                 .getResponse();
 
-        CategoryDto categoryDto = objectMapper.readValue(getResponse.getContentAsString(), CategoryDto.class);
-        assertEquals("New Category", categoryDto.getName());
+        CategoryResponse categoryResponse = objectMapper.readValue(
+                getResponse.getContentAsString(), CategoryResponse.class);
+        assertEquals("New Category", categoryResponse.getName());
     }
 
     @Test
@@ -91,7 +92,8 @@ public class CategoryControllerTest {
                 .andReturn()
                 .getResponse();
 
-        CategoryDto categoryDto = objectMapper.readValue(updateResponse.getContentAsString(), CategoryDto.class);
-        assertEquals("new name", categoryDto.getName());
+        CategoryResponse categoryResponse = objectMapper.readValue(
+                updateResponse.getContentAsString(), CategoryResponse.class);
+        assertEquals("new name", categoryResponse.getName());
     }
 }
