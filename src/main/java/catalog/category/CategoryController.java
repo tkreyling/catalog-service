@@ -18,23 +18,14 @@ import static org.springframework.http.ResponseEntity.notFound;
 @RequestMapping("/categories")
 @Value
 public class CategoryController {
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     @RequestMapping(method = RequestMethod.POST)
-    public HttpEntity<?> createCategory(@RequestBody @Valid CategoryRequest categoryRequest) {
-        Category category = mapRequestToDomainObject(categoryRequest);
-
-        Category savedCategory = categoryRepository.save(category);
-
-        return created(URI.create("/categories/" + savedCategory.getId()))
-                .body(mapDomainObjectToResponse(savedCategory, emptyList()));
-    }
-
-    private Category mapRequestToDomainObject(CategoryRequest categoryRequest) {
-        Category category = new Category();
-        category.setName(categoryRequest.getName());
-        category.setParentCategoryId(categoryRequest.getParentCategoryId());
-        return category;
+    public HttpEntity<?> createCategory(
+            @RequestBody @Valid CategoryRequest categoryRequest
+    ) {
+        CategoryResponse response = categoryService.createCategory(categoryRequest);
+        return created(URI.create("/categories/" + response.getId())).body(response);
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.PUT)
@@ -42,36 +33,17 @@ public class CategoryController {
             @PathVariable long categoryId,
             @RequestBody @Valid CategoryRequest categoryRequest
     ) {
-        List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
-        return categoryRepository.findById(categoryId)
-                .map(category -> updateAttributes(category, categoryRequest))
-                .map(categoryRepository::save)
-                .map(category -> mapDomainObjectToResponse(category, subCategories))
+        return categoryService.updateCategory(categoryId, categoryRequest)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
-    }
-
-    private Category updateAttributes(Category category, CategoryRequest categoryRequest) {
-        category.setName(categoryRequest.getName());
-        return category;
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.GET)
-    public HttpEntity<CategoryResponse> getCategory(@PathVariable long categoryId) {
-        List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
-        return categoryRepository.findById(categoryId)
-                .map(category -> mapDomainObjectToResponse(category, subCategories))
+    public HttpEntity<CategoryResponse> getCategory(
+            @PathVariable long categoryId
+    ) {
+        return categoryService.loadCategory(categoryId)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
-    }
-
-    private CategoryResponse mapDomainObjectToResponse(Category category, List<Category> subCategories) {
-        return new CategoryResponse(
-                category.getId(),
-                category.getName(),
-                subCategories.stream()
-                        .map(subCategory -> mapDomainObjectToResponse(subCategory, emptyList()))
-                        .collect(toList())
-        );
     }
 }
