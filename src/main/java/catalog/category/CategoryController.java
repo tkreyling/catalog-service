@@ -9,10 +9,7 @@ import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
 
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
-import static org.springframework.http.ResponseEntity.created;
-import static org.springframework.http.ResponseEntity.notFound;
+import static org.springframework.http.ResponseEntity.*;
 
 @RestController
 @RequestMapping("/categories")
@@ -45,5 +42,12 @@ public class CategoryController {
         return categoryService.loadCategory(categoryId)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
+    }
+
+    @RequestMapping(value = "{categoryId}/path", method = RequestMethod.GET)
+    public HttpEntity<List<CategoryResponse>> getCategoryPath(
+            @PathVariable long categoryId
+    ) {
+        return ok(categoryService.loadCategoryPath(categoryId));
     }
 }

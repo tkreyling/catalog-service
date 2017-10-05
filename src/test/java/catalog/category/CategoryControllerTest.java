@@ -1,6 +1,7 @@
 package catalog.category;
 
 import catalog.Application;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Value;
 import org.junit.Test;
@@ -13,6 +14,10 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 import static org.springframework.http.HttpHeaders.LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -63,6 +68,19 @@ public class CategoryControllerTest {
         CategoryResponse reloadedExistingCategory = getCategory(existingCategory.location);
 
         assertEquals(1, reloadedExistingCategory.getSubCategories().size());
+    }
+
+    @Test
+    public void theCategoryPathIsTheListOfAllParentCategories() throws Exception {
+        CreateCategoryResult root = createCategory("Root", null);
+        CreateCategoryResult subCategory = createCategory("Sub Category", root.response.getId());
+        CreateCategoryResult subSubCategory = createCategory("Sub Sub Category", subCategory.response.getId());
+
+        List<CategoryResponse> categoryPath = getCategoryPath(subSubCategory.response.getId());
+
+        List<String> categoryNames = categoryPath.stream().map(CategoryResponse::getName).collect(toList());
+
+        assertEquals(asList("Root", "Sub Category", "Sub Sub Category"), categoryNames);
     }
 
     @Value
@@ -116,5 +134,16 @@ public class CategoryControllerTest {
                 .getResponse();
 
         return objectMapper.readValue(getResponse.getContentAsString(), CategoryResponse.class);
+    }
+
+    private List<CategoryResponse> getCategoryPath(long categoryId) throws Exception {
+        MockHttpServletResponse getResponse = mvc.perform(
+                get("/categories/" + categoryId + "/path")
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        return objectMapper.readValue(getResponse.getContentAsString(), new TypeReference<List<CategoryResponse>>() {});
     }
 }
