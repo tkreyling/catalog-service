@@ -37,7 +37,7 @@ public class CategoryControllerTest {
 
     @Test
     public void theCatalogRetainsANewCategory() throws Exception {
-        CreateCategoryResult createResponse = createCategory("New Category");
+        CreateCategoryResult createResponse = createCategory("New Category", null);
 
         assertNotNull(createResponse.location);
 
@@ -49,7 +49,7 @@ public class CategoryControllerTest {
 
     @Test
     public void anExistingCategoryCanBeUpdated() throws Exception {
-        CreateCategoryResult createResponse = createCategory("old name");
+        CreateCategoryResult createResponse = createCategory("old name", null);
 
         assertNotNull(createResponse.location);
 
@@ -60,11 +60,19 @@ public class CategoryControllerTest {
 
     @Test
     public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
-        CreateCategoryResult createResponse = createCategory("Existing Category");
+        CreateCategoryResult existingCategory = createCategory("Existing Category", null);
 
-        assertNotNull(createResponse.location);
-        assertNotEquals(0, createResponse.response.getId());
+        assertNotNull(existingCategory.location);
+        assertNotEquals(0, existingCategory.response.getId());
 
+        CreateCategoryResult newCategory = createCategory("New Category", existingCategory.response.getId());
+
+        assertNotNull(newCategory.location);
+        assertNotEquals(0, newCategory.response.getId());
+
+        CategoryResponse reloadedExistingCategory = getCategory(existingCategory.location);
+
+        assertEquals(1, reloadedExistingCategory.getSubCategories().size());
     }
 
     @Value
@@ -73,8 +81,8 @@ public class CategoryControllerTest {
         String location;
     }
 
-    private CreateCategoryResult createCategory(String name) throws Exception {
-        CategoryRequest createRequest = new CategoryRequest(name);
+    private CreateCategoryResult createCategory(String name, Long parentCategoryId) throws Exception {
+        CategoryRequest createRequest = new CategoryRequest(name, parentCategoryId);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/categories")
@@ -92,7 +100,7 @@ public class CategoryControllerTest {
     }
 
     private CategoryResponse updateCategory(String categoryUrl, String name) throws Exception {
-        CategoryRequest updateRequest = new CategoryRequest(name);
+        CategoryRequest updateRequest = new CategoryRequest(name, null);
 
         MockHttpServletResponse updateResponse = mvc.perform(
                 put(categoryUrl)

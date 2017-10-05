@@ -7,7 +7,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.List;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 import static org.springframework.http.ResponseEntity.created;
 import static org.springframework.http.ResponseEntity.notFound;
 
@@ -24,12 +27,13 @@ public class CategoryController {
         Category savedCategory = categoryRepository.save(category);
 
         return created(URI.create("/categories/" + savedCategory.getId()))
-                .body(mapDomainObjectToResponse(savedCategory));
+                .body(mapDomainObjectToResponse(savedCategory, emptyList()));
     }
 
     private Category mapRequestToDomainObject(CategoryRequest categoryRequest) {
         Category category = new Category();
         category.setName(categoryRequest.getName());
+        category.setParentCategoryId(categoryRequest.getParentCategoryId());
         return category;
     }
 
@@ -38,10 +42,11 @@ public class CategoryController {
             @PathVariable long categoryId,
             @RequestBody @Valid CategoryRequest categoryRequest
     ) {
+        List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
         return categoryRepository.findById(categoryId)
                 .map(category -> updateAttributes(category, categoryRequest))
                 .map(categoryRepository::save)
-                .map(this::mapDomainObjectToResponse)
+                .map(category -> mapDomainObjectToResponse(category, subCategories))
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
@@ -53,13 +58,20 @@ public class CategoryController {
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.GET)
     public HttpEntity<CategoryResponse> getCategory(@PathVariable long categoryId) {
+        List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
         return categoryRepository.findById(categoryId)
-                .map(this::mapDomainObjectToResponse)
+                .map(category -> mapDomainObjectToResponse(category, subCategories))
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private CategoryResponse mapDomainObjectToResponse(Category category) {
-        return new CategoryResponse(category.getId(), category.getName());
+    private CategoryResponse mapDomainObjectToResponse(Category category, List<Category> subCategories) {
+        return new CategoryResponse(
+                category.getId(),
+                category.getName(),
+                subCategories.stream()
+                        .map(subCategory -> mapDomainObjectToResponse(subCategory, emptyList()))
+                        .collect(toList())
+        );
     }
 }
