@@ -41,15 +41,8 @@ public class CategoryControllerTest {
 
         assertNotNull(createResponse.location);
 
-        MockHttpServletResponse getResponse = mvc.perform(
-                get(createResponse.location)
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
+        CategoryResponse categoryResponse = getCategory(createResponse.location);
 
-        CategoryResponse categoryResponse = objectMapper.readValue(
-                getResponse.getContentAsString(), CategoryResponse.class);
         assertEquals("New Category", categoryResponse.getName());
         assertNotEquals(0, categoryResponse.getId());
     }
@@ -60,19 +53,8 @@ public class CategoryControllerTest {
 
         assertNotNull(createResponse.location);
 
-        CategoryRequest updateRequest = new CategoryRequest("new name");
+        CategoryResponse categoryResponse = updateCategory(createResponse.location, "new name");
 
-        MockHttpServletResponse updateResponse = mvc.perform(
-                put(createResponse.location)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(updateRequest))
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-
-        CategoryResponse categoryResponse = objectMapper.readValue(
-                updateResponse.getContentAsString(), CategoryResponse.class);
         assertEquals("new name", categoryResponse.getName());
     }
 
@@ -80,6 +62,7 @@ public class CategoryControllerTest {
     public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
         CreateCategoryResult createResponse = createCategory("Existing Category");
 
+        assertNotNull(createResponse.location);
         assertNotEquals(0, createResponse.response.getId());
 
     }
@@ -106,5 +89,31 @@ public class CategoryControllerTest {
                 createResponse.getContentAsString(), CategoryResponse.class);
 
         return new CreateCategoryResult(categoryResponse, createResponse.getHeader(LOCATION));
+    }
+
+    private CategoryResponse updateCategory(String categoryUrl, String name) throws Exception {
+        CategoryRequest updateRequest = new CategoryRequest(name);
+
+        MockHttpServletResponse updateResponse = mvc.perform(
+                put(categoryUrl)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(updateRequest))
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        return objectMapper.readValue(updateResponse.getContentAsString(), CategoryResponse.class);
+    }
+
+    private CategoryResponse getCategory(String categoryUrl) throws Exception {
+        MockHttpServletResponse getResponse = mvc.perform(
+                get(categoryUrl)
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        return objectMapper.readValue(getResponse.getContentAsString(), CategoryResponse.class);
     }
 }
