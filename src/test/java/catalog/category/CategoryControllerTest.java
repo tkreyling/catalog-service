@@ -39,8 +39,6 @@ public class CategoryControllerTest {
     public void theCatalogRetainsANewCategory() throws Exception {
         CreateCategoryResult createResponse = createCategory("New Category", null);
 
-        assertNotNull(createResponse.location);
-
         CategoryResponse categoryResponse = getCategory(createResponse.location);
 
         assertEquals("New Category", categoryResponse.getName());
@@ -51,8 +49,6 @@ public class CategoryControllerTest {
     public void anExistingCategoryCanBeUpdated() throws Exception {
         CreateCategoryResult createResponse = createCategory("old name", null);
 
-        assertNotNull(createResponse.location);
-
         CategoryResponse categoryResponse = updateCategory(createResponse.location, "new name");
 
         assertEquals("new name", categoryResponse.getName());
@@ -62,13 +58,7 @@ public class CategoryControllerTest {
     public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
         CreateCategoryResult existingCategory = createCategory("Existing Category", null);
 
-        assertNotNull(existingCategory.location);
-        assertNotEquals(0, existingCategory.response.getId());
-
         CreateCategoryResult newCategory = createCategory("New Category", existingCategory.response.getId());
-
-        assertNotNull(newCategory.location);
-        assertNotEquals(0, newCategory.response.getId());
 
         CategoryResponse reloadedExistingCategory = getCategory(existingCategory.location);
 
@@ -95,6 +85,9 @@ public class CategoryControllerTest {
 
         CategoryResponse categoryResponse = objectMapper.readValue(
                 createResponse.getContentAsString(), CategoryResponse.class);
+
+        assertNotNull(createResponse.getHeader(LOCATION));
+        assertNotEquals(0, categoryResponse.getId());
 
         return new CreateCategoryResult(categoryResponse, createResponse.getHeader(LOCATION));
     }
