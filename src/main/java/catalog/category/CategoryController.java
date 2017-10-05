@@ -59,6 +59,6 @@ public class CategoryController {
     }
 
     private CategoryResponse mapDomainObjectToResponse(Category category) {
-        return new CategoryResponse(category.getName());
+        return new CategoryResponse(category.getId(), category.getName());
     }
 }

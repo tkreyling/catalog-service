@@ -13,6 +13,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.HttpHeaders.LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -63,6 +64,7 @@ public class CategoryControllerTest {
         CategoryResponse categoryResponse = objectMapper.readValue(
                 getResponse.getContentAsString(), CategoryResponse.class);
         assertEquals("New Category", categoryResponse.getName());
+        assertNotEquals(0, categoryResponse.getId());
     }
 
     @Test
