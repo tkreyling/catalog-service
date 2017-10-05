@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -20,7 +19,7 @@ public class CategoryService {
 
         Category savedCategory = categoryRepository.save(category);
 
-        return mapDomainObjectToResponse(savedCategory, emptyList());
+        return mapDomainObjectToResponse(savedCategory);
     }
 
     private Category mapRequestToDomainObject(CategoryRequest categoryRequest) {
@@ -30,7 +29,8 @@ public class CategoryService {
         return category;
     }
 
-    public Optional<CategoryResponse> updateCategory(long categoryId, CategoryRequest categoryRequest) {
+    public Optional<CategoryResponseWithSubCategories> updateCategory(
+            long categoryId, CategoryRequest categoryRequest) {
         List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
         return categoryRepository.findById(categoryId)
                 .map(category -> updateAttributes(category, categoryRequest))
@@ -43,20 +43,25 @@ public class CategoryService {
         return category;
     }
 
-    public Optional<CategoryResponse> loadCategory(long categoryId) {
+    public Optional<CategoryResponseWithSubCategories> loadCategory(long categoryId) {
         List<Category> subCategories = categoryRepository.findByParentCategoryId(categoryId);
         return categoryRepository.findById(categoryId)
                 .map(category -> mapDomainObjectToResponse(category, subCategories));
     }
 
-    private CategoryResponse mapDomainObjectToResponse(Category category, List<Category> subCategories) {
-        return new CategoryResponse(
+    private CategoryResponseWithSubCategories mapDomainObjectToResponse(
+            Category category, List<Category> subCategories) {
+        return new CategoryResponseWithSubCategories(
                 category.getId(),
                 category.getName(),
                 subCategories.stream()
-                        .map(subCategory -> mapDomainObjectToResponse(subCategory, emptyList()))
+                        .map(this::mapDomainObjectToResponse)
                         .collect(toList())
         );
+    }
+
+    private CategoryResponse mapDomainObjectToResponse(Category category) {
+        return new CategoryResponse(category.getId(), category.getName());
     }
 
     public List<CategoryResponse> loadCategoryPath(Long categoryId) {
@@ -65,7 +70,7 @@ public class CategoryService {
         while (true) {
             categoryId = categoryRepository.findById(categoryId)
                     .map(category -> {
-                        categoryPath.add(0, mapDomainObjectToResponse(category, emptyList()));
+                        categoryPath.add(0, mapDomainObjectToResponse(category));
                         return category;
                     })
                     .map(Category::getParentCategoryId)

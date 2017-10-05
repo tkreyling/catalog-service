@@ -26,7 +26,7 @@ public class CategoryController {
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.PUT)
-    public HttpEntity<CategoryResponse> updateCategory(
+    public HttpEntity<CategoryResponseWithSubCategories> updateCategory(
             @PathVariable long categoryId,
             @RequestBody @Valid CategoryRequest categoryRequest
     ) {
@@ -36,7 +36,7 @@ public class CategoryController {
     }
 
     @RequestMapping(value = "{categoryId}", method = RequestMethod.GET)
-    public HttpEntity<CategoryResponse> getCategory(
+    public HttpEntity<CategoryResponseWithSubCategories> getCategory(
             @PathVariable long categoryId
     ) {
         return categoryService.loadCategory(categoryId)

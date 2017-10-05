@@ -44,7 +44,7 @@ public class CategoryControllerTest {
     public void theCatalogRetainsANewCategory() throws Exception {
         CreateCategoryResult createResponse = createCategory("New Category", null);
 
-        CategoryResponse categoryResponse = getCategory(createResponse.location);
+        CategoryResponseWithSubCategories categoryResponse = getCategory(createResponse.location);
 
         assertEquals("New Category", categoryResponse.getName());
         assertNotEquals(0, categoryResponse.getId());
@@ -54,7 +54,7 @@ public class CategoryControllerTest {
     public void anExistingCategoryCanBeUpdated() throws Exception {
         CreateCategoryResult createResponse = createCategory("old name", null);
 
-        CategoryResponse categoryResponse = updateCategory(createResponse.location, "new name");
+        CategoryResponseWithSubCategories categoryResponse = updateCategory(createResponse.location, "new name");
 
         assertEquals("new name", categoryResponse.getName());
     }
@@ -65,7 +65,7 @@ public class CategoryControllerTest {
 
         CreateCategoryResult newCategory = createCategory("New Category", existingCategory.response.getId());
 
-        CategoryResponse reloadedExistingCategory = getCategory(existingCategory.location);
+        CategoryResponseWithSubCategories reloadedExistingCategory = getCategory(existingCategory.location);
 
         assertEquals(1, reloadedExistingCategory.getSubCategories().size());
     }
@@ -110,7 +110,7 @@ public class CategoryControllerTest {
         return new CreateCategoryResult(categoryResponse, createResponse.getHeader(LOCATION));
     }
 
-    private CategoryResponse updateCategory(String categoryUrl, String name) throws Exception {
+    private CategoryResponseWithSubCategories updateCategory(String categoryUrl, String name) throws Exception {
         CategoryRequest updateRequest = new CategoryRequest(name, null);
 
         MockHttpServletResponse updateResponse = mvc.perform(
@@ -122,10 +122,10 @@ public class CategoryControllerTest {
                 .andReturn()
                 .getResponse();
 
-        return objectMapper.readValue(updateResponse.getContentAsString(), CategoryResponse.class);
+        return objectMapper.readValue(updateResponse.getContentAsString(), CategoryResponseWithSubCategories.class);
     }
 
-    private CategoryResponse getCategory(String categoryUrl) throws Exception {
+    private CategoryResponseWithSubCategories getCategory(String categoryUrl) throws Exception {
         MockHttpServletResponse getResponse = mvc.perform(
                 get(categoryUrl)
         )
@@ -133,7 +133,7 @@ public class CategoryControllerTest {
                 .andReturn()
                 .getResponse();
 
-        return objectMapper.readValue(getResponse.getContentAsString(), CategoryResponse.class);
+        return objectMapper.readValue(getResponse.getContentAsString(), CategoryResponseWithSubCategories.class);
     }
 
     private List<CategoryResponse> getCategoryPath(long categoryId) throws Exception {

@@ -25,7 +25,7 @@ public class CategoryServiceTest {
     public void theCatalogRetainsANewCategory() {
         CategoryResponse createResponse = createCategory("New Category", null);
 
-        CategoryResponse categoryResponse = getCategory(createResponse.getId());
+        CategoryResponseWithSubCategories categoryResponse = getCategory(createResponse.getId());
 
         assertEquals("New Category", categoryResponse.getName());
         assertNotEquals(0, categoryResponse.getId());
@@ -35,7 +35,7 @@ public class CategoryServiceTest {
     public void anExistingCategoryCanBeUpdated() {
         CategoryResponse createResponse = createCategory("old name", null);
 
-        CategoryResponse categoryResponse = updateCategory(createResponse.getId(), "new name");
+        CategoryResponseWithSubCategories categoryResponse = updateCategory(createResponse.getId(), "new name");
 
         assertEquals("new name", categoryResponse.getName());
     }
@@ -46,7 +46,7 @@ public class CategoryServiceTest {
 
         CategoryResponse newCategory = createCategory("New Category", existingCategory.getId());
 
-        CategoryResponse reloadedExistingCategory = getCategory(existingCategory.getId());
+        CategoryResponseWithSubCategories reloadedExistingCategory = getCategory(existingCategory.getId());
 
         assertEquals(1, reloadedExistingCategory.getSubCategories().size());
     }
@@ -74,13 +74,13 @@ public class CategoryServiceTest {
         return categoryResponse;
     }
 
-    private CategoryResponse updateCategory(long categoryId, String name) {
+    private CategoryResponseWithSubCategories updateCategory(long categoryId, String name) {
         CategoryRequest updateRequest = new CategoryRequest(name, null);
 
         return categoryService.updateCategory(categoryId, updateRequest).get();
     }
 
-    private CategoryResponse getCategory(long categoryId) {
+    private CategoryResponseWithSubCategories getCategory(long categoryId) {
         return categoryService.loadCategory(categoryId).get();
     }
 }
