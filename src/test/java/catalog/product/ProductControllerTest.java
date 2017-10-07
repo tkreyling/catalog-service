@@ -117,4 +117,16 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         ProductDto productDto = objectMapper.readValue(createResponse.getContentAsString(), ProductDto.class);
         assertNotNull(productDto.getCategoryId());
     }
+
+    @Test
+    public void aReferenceToAnNonExistingCategoryIsRejected() throws Exception {
+        ProductDto createRequest = new ProductDto("New Product", 20000L);
+
+        mvc.perform(
+                post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(createRequest))
+        )
+                .andExpect(status().isBadRequest());
+    }
 }
