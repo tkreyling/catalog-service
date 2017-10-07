@@ -23,12 +23,15 @@ public class ProductController {
 
         Product savedProduct = productRepository.save(product);
 
-        return created(URI.create("/products/" + savedProduct.getId())).build();
+        ProductDto productResponse = mapDomainObjectToResponse(savedProduct);
+
+        return created(URI.create("/products/" + savedProduct.getId())).body(productResponse);
     }
 
     private Product mapRequestToDomainObject(ProductDto productDto) {
         Product product = new Product();
         product.setName(productDto.getName());
+        product.setCategoryId(productDto.getCategoryId());
         return product;
     }
 
@@ -59,6 +62,6 @@ public class ProductController {
     }
 
     private ProductDto mapDomainObjectToResponse(Product product) {
-        return new ProductDto(product.getName());
+        return new ProductDto(product.getName(), product.getCategoryId());
     }
 }

@@ -1,7 +1,9 @@
 package catalog.product;
 
 import catalog.Application;
+import catalog.category.CategoryEndpointMixin;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,12 +25,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-public class ProductControllerTest {
+public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Autowired
+    @Getter
     private MockMvc mvc;
 
     @Autowired
+    @Getter
     private ObjectMapper objectMapper;
 
     @Test
@@ -39,7 +43,7 @@ public class ProductControllerTest {
 
     @Test
     public void theCatalogRetainsANewProduct() throws Exception {
-        ProductDto createRequest = new ProductDto("New Product");
+        ProductDto createRequest = new ProductDto("New Product", null);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -66,7 +70,7 @@ public class ProductControllerTest {
 
     @Test
     public void anExistingProductCanBeUpdated() throws Exception {
-        ProductDto createRequest = new ProductDto("old name");
+        ProductDto createRequest = new ProductDto("old name", null);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -80,7 +84,7 @@ public class ProductControllerTest {
         String productUrl = createResponse.getHeader(LOCATION);
         assertNotNull(productUrl);
 
-        ProductDto updateRequest = new ProductDto("new name");
+        ProductDto updateRequest = new ProductDto("new name", null);
 
         MockHttpServletResponse updateResponse = mvc.perform(
                 put(productUrl)
@@ -93,5 +97,24 @@ public class ProductControllerTest {
 
         ProductDto productDto = objectMapper.readValue(updateResponse.getContentAsString(), ProductDto.class);
         assertEquals("new name", productDto.getName());
+    }
+
+    @Test
+    public void aProductCanBeLinkedToAnExistingCategory() throws Exception {
+        CreateCategoryResult categoryResponse = createCategory("New Category", null);
+
+        ProductDto createRequest = new ProductDto("New Product", categoryResponse.getResponse().getId());
+
+        MockHttpServletResponse createResponse = mvc.perform(
+                post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(createRequest))
+        )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        ProductDto productDto = objectMapper.readValue(createResponse.getContentAsString(), ProductDto.class);
+        assertNotNull(productDto.getCategoryId());
     }
 }
