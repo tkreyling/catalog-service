@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.List;
@@ -44,6 +45,15 @@ public class CategoryRepositoryTest {
         List<Category> subCategories = categoryRepository.findByParentCategoryId(existingCategory.getId());
 
         assertEquals(1, subCategories.size());
+    }
+
+    @Test(expected = DataIntegrityViolationException.class)
+    public void aReferenceToAnNonExistingCategoryIsRejected() {
+        Category newCategory = new Category();
+        newCategory.setName("New Category");
+        newCategory.setParentCategoryId(2000000L);
+
+        categoryRepository.save(newCategory);
     }
 
 }
