@@ -1,16 +1,14 @@
 package catalog.category;
 
 import catalog.Application;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.Value;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,20 +16,22 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.*;
-import static org.springframework.http.HttpHeaders.LOCATION;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-public class CategoryControllerTest {
+public class CategoryControllerTest implements CategoryEndpointMixin {
 
     @Autowired
+    @Getter
     private MockMvc mvc;
 
     @Autowired
+    @Getter
     private ObjectMapper objectMapper;
 
     @Test
@@ -44,7 +44,7 @@ public class CategoryControllerTest {
     public void theCatalogRetainsANewCategory() throws Exception {
         CreateCategoryResult createResponse = createCategory("New Category", null);
 
-        CategoryResponseWithSubCategories categoryResponse = getCategory(createResponse.location);
+        CategoryResponseWithSubCategories categoryResponse = getCategory(createResponse.getLocation());
 
         assertEquals("New Category", categoryResponse.getName());
         assertNotEquals(0, categoryResponse.getId());
@@ -54,7 +54,7 @@ public class CategoryControllerTest {
     public void anExistingCategoryCanBeUpdated() throws Exception {
         CreateCategoryResult createResponse = createCategory("old name", null);
 
-        CategoryResponseWithSubCategories categoryResponse = updateCategory(createResponse.location, "new name");
+        CategoryResponseWithSubCategories categoryResponse = updateCategory(createResponse.getLocation(), "new name");
 
         assertEquals("new name", categoryResponse.getName());
     }
@@ -63,9 +63,9 @@ public class CategoryControllerTest {
     public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
         CreateCategoryResult existingCategory = createCategory("Existing Category", null);
 
-        CreateCategoryResult newCategory = createCategory("New Category", existingCategory.response.getId());
+        CreateCategoryResult newCategory = createCategory("New Category", existingCategory.getResponse().getId());
 
-        CategoryResponseWithSubCategories reloadedExistingCategory = getCategory(existingCategory.location);
+        CategoryResponseWithSubCategories reloadedExistingCategory = getCategory(existingCategory.getLocation());
 
         assertEquals(1, reloadedExistingCategory.getSubCategories().size());
     }
@@ -73,77 +73,13 @@ public class CategoryControllerTest {
     @Test
     public void theCategoryPathIsTheListOfAllParentCategories() throws Exception {
         CreateCategoryResult root = createCategory("Root", null);
-        CreateCategoryResult subCategory = createCategory("Sub Category", root.response.getId());
-        CreateCategoryResult subSubCategory = createCategory("Sub Sub Category", subCategory.response.getId());
+        CreateCategoryResult subCategory = createCategory("Sub Category", root.getResponse().getId());
+        CreateCategoryResult subSubCategory = createCategory("Sub Sub Category", subCategory.getResponse().getId());
 
-        List<CategoryResponse> categoryPath = getCategoryPath(subSubCategory.response.getId());
+        List<CategoryResponse> categoryPath = getCategoryPath(subSubCategory.getResponse().getId());
 
         List<String> categoryNames = categoryPath.stream().map(CategoryResponse::getName).collect(toList());
 
         assertEquals(asList("Root", "Sub Category", "Sub Sub Category"), categoryNames);
-    }
-
-    @Value
-    private static class CreateCategoryResult {
-        CategoryResponse response;
-        String location;
-    }
-
-    private CreateCategoryResult createCategory(String name, Long parentCategoryId) throws Exception {
-        CategoryRequest createRequest = new CategoryRequest(name, parentCategoryId);
-
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/categories")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
-
-        CategoryResponse categoryResponse = objectMapper.readValue(
-                createResponse.getContentAsString(), CategoryResponse.class);
-
-        assertNotNull(createResponse.getHeader(LOCATION));
-        assertNotEquals(0, categoryResponse.getId());
-
-        return new CreateCategoryResult(categoryResponse, createResponse.getHeader(LOCATION));
-    }
-
-    private CategoryResponseWithSubCategories updateCategory(String categoryUrl, String name) throws Exception {
-        CategoryRequest updateRequest = new CategoryRequest(name, null);
-
-        MockHttpServletResponse updateResponse = mvc.perform(
-                put(categoryUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(updateRequest))
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-
-        return objectMapper.readValue(updateResponse.getContentAsString(), CategoryResponseWithSubCategories.class);
-    }
-
-    private CategoryResponseWithSubCategories getCategory(String categoryUrl) throws Exception {
-        MockHttpServletResponse getResponse = mvc.perform(
-                get(categoryUrl)
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-
-        return objectMapper.readValue(getResponse.getContentAsString(), CategoryResponseWithSubCategories.class);
-    }
-
-    private List<CategoryResponse> getCategoryPath(long categoryId) throws Exception {
-        MockHttpServletResponse getResponse = mvc.perform(
-                get("/categories/" + categoryId + "/path")
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-
-        return objectMapper.readValue(getResponse.getContentAsString(), new TypeReference<List<CategoryResponse>>() {});
     }
 }
