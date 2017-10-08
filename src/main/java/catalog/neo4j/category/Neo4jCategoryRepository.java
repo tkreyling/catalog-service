@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface Neo4jCategoryRepository extends Neo4jRepository<Category, Long> {
 
+    List<Category> findByName(String name);
+
     @Query("MATCH (c:Category)-[:Parent]->(p:Category) WHERE id(p)={id} RETURN c")
     List<Category> findByParentId(@Param("id") Long id);
 
@@ -16,6 +18,4 @@ public interface Neo4jCategoryRepository extends Neo4jRepository<Category, Long>
 
     @Query("MATCH path = (c:Category)-[:Parent*]->(p:Category) WHERE id(c)={id} RETURN path")
     List<Category> loadCategoryPath(@Param("id") Long id);
-
-    List<Category> findByName(String name);
 }

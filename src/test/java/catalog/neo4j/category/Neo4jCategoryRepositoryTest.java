@@ -56,6 +56,22 @@ public class Neo4jCategoryRepositoryTest {
     }
 
     @Test
+    public void saveIsCascadedToParent() {
+        Category newCategory = new Category();
+        newCategory.setName("New Category");
+
+        Category parent = new Category();
+        parent.setName("Indirectly");
+        newCategory.setParent(parent);
+
+        neo4jCategoryRepository.save(newCategory);
+
+        List<Category> categories = neo4jCategoryRepository.findByName("Indirectly");
+
+        assertEquals(1, categories.size());
+    }
+
+    @Test
     public void forACategoryPathTheRootNodeIsTheMostNestedParent() {
         Category root = new Category();
         root.setName("root");
@@ -95,22 +111,6 @@ public class Neo4jCategoryRepositoryTest {
         List<String> categoryNames = categoryPath.stream().map(Category::getName).collect(toList());
 
         assertEquals(asList("Sub Sub Category", "Sub Category", "Root"), categoryNames);
-    }
-
-    @Test
-    public void saveIsCascadedToParent() {
-        Category newCategory = new Category();
-        newCategory.setName("New Category");
-
-        Category parent = new Category();
-        parent.setName("Indirectly");
-        newCategory.setParent(parent);
-
-        neo4jCategoryRepository.save(newCategory);
-
-        List<Category> categories = neo4jCategoryRepository.findByName("Indirectly");
-
-        assertEquals(1, categories.size());
     }
 
     @After
