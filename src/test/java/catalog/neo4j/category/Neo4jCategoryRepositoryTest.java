@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -30,6 +32,25 @@ public class Neo4jCategoryRepositoryTest {
         Category savedCategory = neo4jCategoryRepository.save(category);
 
         assertNotNull(savedCategory.getId());
+    }
+
+    @Test
+    public void aCategoryCanBeNestedInAnExistingCategory() {
+        Category existingCategory = new Category();
+        existingCategory.setName("Existing Category");
+
+        neo4jCategoryRepository.save(existingCategory);
+
+        Category newCategory = new Category();
+        newCategory.setName("New Category");
+        newCategory.setParent(existingCategory);
+
+        neo4jCategoryRepository.save(newCategory);
+
+        List<Category> subCategories = neo4jCategoryRepository.findByParentId(existingCategory.getId());
+
+        assertEquals(1, subCategories.size());
+        assertEquals("New Category", subCategories.get(0).getName());
     }
 
     @After
