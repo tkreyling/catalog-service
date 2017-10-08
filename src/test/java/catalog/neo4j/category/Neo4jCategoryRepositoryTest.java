@@ -54,6 +54,26 @@ public class Neo4jCategoryRepositoryTest {
     }
 
     @Test
+    public void forACategoryPathTheRootNodeIsTheMostNestedParent() {
+        Category root = new Category();
+        root.setName("root");
+
+        Category subCategory = new Category();
+        subCategory.setName("subCategory");
+        subCategory.setParent(root);
+
+        Category subSubCategory = new Category();
+        subSubCategory.setName("subSubCategory");
+        subSubCategory.setParent(root);
+
+        neo4jCategoryRepository.save(subSubCategory);
+
+        Category category = neo4jCategoryRepository.findRootNode(subSubCategory.getId());
+
+        assertEquals("root", category.getName());
+    }
+
+    @Test
     public void saveIsCascadedToParent() {
         Category newCategory = new Category();
         newCategory.setName("New Category");
