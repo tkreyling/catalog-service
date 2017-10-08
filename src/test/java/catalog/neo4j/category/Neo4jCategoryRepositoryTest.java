@@ -53,6 +53,22 @@ public class Neo4jCategoryRepositoryTest {
         assertEquals("New Category", subCategories.get(0).getName());
     }
 
+    @Test
+    public void saveIsCascadedToParent() {
+        Category newCategory = new Category();
+        newCategory.setName("New Category");
+
+        Category parent = new Category();
+        parent.setName("Indirectly");
+        newCategory.setParent(parent);
+
+        neo4jCategoryRepository.save(newCategory);
+
+        List<Category> categories = neo4jCategoryRepository.findByName("Indirectly");
+
+        assertEquals(1, categories.size());
+    }
+
     @After
     public void tearDown() {
         session.purgeDatabase();

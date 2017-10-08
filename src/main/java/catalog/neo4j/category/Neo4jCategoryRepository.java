@@ -10,4 +10,6 @@ public interface Neo4jCategoryRepository extends Neo4jRepository<Category, Long>
 
     @Query("MATCH (c:Category)-[:PARENT]->(p:Category) WHERE id(p)={id} return c")
     List<Category> findByParentId(@Param("id") Long id);
+
+    List<Category> findByName(String name);
 }
