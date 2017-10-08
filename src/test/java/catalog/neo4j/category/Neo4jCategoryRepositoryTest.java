@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -71,6 +73,28 @@ public class Neo4jCategoryRepositoryTest {
         Category category = neo4jCategoryRepository.findRootNode(subSubCategory.getId());
 
         assertEquals("root", category.getName());
+    }
+
+    @Test
+    public void theCategoryPathIsTheListOfAllParentCategories() {
+        Category root = new Category();
+        root.setName("Root");
+
+        Category subCategory = new Category();
+        subCategory.setName("Sub Category");
+        subCategory.setParent(root);
+
+        Category subSubCategory = new Category();
+        subSubCategory.setName("Sub Sub Category");
+        subSubCategory.setParent(subCategory);
+
+        neo4jCategoryRepository.save(subSubCategory);
+
+        List<Category> categoryPath = neo4jCategoryRepository.loadCategoryPath(subSubCategory.getId());
+
+        List<String> categoryNames = categoryPath.stream().map(Category::getName).collect(toList());
+
+        assertEquals(asList("Sub Sub Category", "Sub Category", "Root"), categoryNames);
     }
 
     @Test
