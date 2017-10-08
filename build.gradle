@@ -27,6 +27,14 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
 
+    compile('org.springframework.boot:spring-boot-starter-data-neo4j') {
+        exclude group: 'org.neo4j', module: 'neo4j-ogm-http-driver'
+    }
+
+    compile "org.neo4j:neo4j-ogm-bolt-driver"
+    testCompile "org.neo4j:neo4j-ogm-embedded-driver:3.0.0-RC1"
+    testCompile "org.neo4j:neo4j:3.1.2"
+
     compile "org.flywaydb:flyway-core"
 
     compile "com.h2database:h2"

@@ -1,0 +1,39 @@
+package catalog.neo4j.category;
+
+import catalog.Application;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.neo4j.ogm.session.Session;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.junit.Assert.*;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = Application.class)
+@Transactional
+public class Neo4jCategoryRepositoryTest {
+    @Autowired
+    private Session session;
+
+    @Autowired
+    private Neo4jCategoryRepository neo4jCategoryRepository;
+
+    @Test
+    public void anEmptyRepositoryRetainsANewCategory() {
+        Category category = new Category();
+        category.setName("New Category");
+
+        Category savedCategory = neo4jCategoryRepository.save(category);
+
+        assertNotNull(savedCategory.getId());
+    }
+
+    @After
+    public void tearDown() {
+        session.purgeDatabase();
+    }
+}
