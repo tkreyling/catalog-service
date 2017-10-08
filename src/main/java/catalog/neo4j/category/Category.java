@@ -14,6 +14,6 @@ public class Category {
 
     private String name;
 
-    @Relationship(type = "PARENT")
+    @Relationship(type = "Parent")
     private Category parent;
 }
