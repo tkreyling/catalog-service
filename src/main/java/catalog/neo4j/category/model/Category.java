@@ -1,4 +1,4 @@
-package catalog.neo4j.category;
+package catalog.neo4j.category.model;
 
 import lombok.Data;
 import org.neo4j.ogm.annotation.GraphId;

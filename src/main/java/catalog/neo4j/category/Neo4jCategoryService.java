@@ -1,5 +1,6 @@
 package catalog.neo4j.category;
 
+import catalog.neo4j.category.model.Category;
 import lombok.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;

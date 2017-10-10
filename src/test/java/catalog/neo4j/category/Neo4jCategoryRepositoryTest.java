@@ -1,6 +1,7 @@
 package catalog.neo4j.category;
 
 import catalog.Application;
+import catalog.neo4j.category.model.Category;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
