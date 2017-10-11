@@ -83,7 +83,7 @@ public class CategoryControllerTest implements CategoryEndpointMixin {
 
         List<String> categoryNames = categoryPath.stream().map(CategoryResponse::getName).collect(toList());
 
-        assertEquals(asList("Root", "Sub Category", "Sub Sub Category"), categoryNames);
+        assertEquals(asList("Sub Sub Category", "Sub Category", "Root"), categoryNames);
     }
 
     @Test

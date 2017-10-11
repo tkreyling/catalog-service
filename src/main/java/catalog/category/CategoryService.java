@@ -4,6 +4,7 @@ import lombok.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,6 +79,8 @@ public class CategoryService {
 
             if (categoryId == null) break;
         }
+
+        Collections.reverse(categoryPath);
 
         return categoryPath;
     }

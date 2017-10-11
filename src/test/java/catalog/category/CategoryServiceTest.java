@@ -21,6 +21,9 @@ public class CategoryServiceTest {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     @Test
     public void theCatalogRetainsANewCategory() {
         CategoryResponse createResponse = createCategory("New Category", null);
@@ -61,7 +64,20 @@ public class CategoryServiceTest {
 
         List<String> categoryNames = categoryPath.stream().map(CategoryResponse::getName).collect(toList());
 
-        assertEquals(asList("Root", "Sub Category", "Sub Sub Category"), categoryNames);
+        assertEquals(asList("Sub Sub Category", "Sub Category", "Root"), categoryNames);
+    }
+
+    @Test
+    public void theCategoryPathIsTheListOfAllParentCategoriesSql() {
+        CategoryResponse root = createCategory("Root", null);
+        CategoryResponse subCategory = createCategory("Sub Category", root.getId());
+        CategoryResponse subSubCategory = createCategory("Sub Sub Category", subCategory.getId());
+
+        List<Category> categoryPath = categoryRepository.loadCategoryPath(subSubCategory.getId());
+
+        List<String> categoryNames = categoryPath.stream().map(Category::getName).collect(toList());
+
+        assertEquals(asList("Sub Sub Category", "Sub Category", "Root"), categoryNames);
     }
 
     private CategoryResponse createCategory(String name, Long parentCategoryId) {
