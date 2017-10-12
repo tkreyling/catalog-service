@@ -18,8 +18,8 @@ public class ProductController {
     private final ProductRepository productRepository;
 
     @RequestMapping(method = RequestMethod.POST)
-    public HttpEntity<?> createProduct(@RequestBody @Valid ProductDto productDto) {
-        Product product = mapRequestToDomainObject(productDto);
+    public HttpEntity<?> createProduct(@RequestBody @Valid ProductRequest productRequest) {
+        Product product = mapRequestToDomainObject(productRequest);
 
         Product savedProduct = productRepository.save(product);
 
@@ -28,30 +28,30 @@ public class ProductController {
         return created(URI.create("/products/" + savedProduct.getId())).body(productResponse);
     }
 
-    private Product mapRequestToDomainObject(ProductDto productDto) {
+    private Product mapRequestToDomainObject(ProductRequest productRequest) {
         Product product = new Product();
-        product.setName(productDto.getName());
-        product.setPrice(productDto.getPrice());
-        product.setCurrency(productDto.getCurrency());
-        product.setCategoryId(productDto.getCategoryId());
+        product.setName(productRequest.getName());
+        product.setPrice(productRequest.getPrice());
+        product.setCurrency(productRequest.getCurrency());
+        product.setCategoryId(productRequest.getCategoryId());
         return product;
     }
 
     @RequestMapping(value = "{productId}", method = RequestMethod.PUT)
     public HttpEntity<ProductDto> updateProduct(
             @PathVariable long productId,
-            @RequestBody @Valid ProductDto productDto
+            @RequestBody @Valid ProductRequest productRequest
     ) {
         return productRepository.findById(productId)
-                .map(product -> updateAttributes(product, productDto))
+                .map(product -> updateAttributes(product, productRequest))
                 .map(productRepository::save)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private Product updateAttributes(Product product, ProductDto productDto) {
-        product.setName(productDto.getName());
+    private Product updateAttributes(Product product, ProductRequest productRequest) {
+        product.setName(productRequest.getName());
         return product;
     }
 

@@ -45,7 +45,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Test
     public void theCatalogRetainsANewProduct() throws Exception {
-        ProductDto createRequest = productWithStandardPrice("New Product", null);
+        ProductRequest createRequest = productWithStandardPrice("New Product", null);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -74,7 +74,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Test
     public void anExistingProductCanBeUpdated() throws Exception {
-        ProductDto createRequest = productWithStandardPrice("old name", null);
+        ProductRequest createRequest = productWithStandardPrice("old name", null);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -88,7 +88,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         String productUrl = createResponse.getHeader(LOCATION);
         assertNotNull(productUrl);
 
-        ProductDto updateRequest = productWithStandardPrice("new name", null);
+        ProductRequest updateRequest = productWithStandardPrice("new name", null);
 
         MockHttpServletResponse updateResponse = mvc.perform(
                 put(productUrl)
@@ -107,7 +107,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
     public void aProductCanBeLinkedToAnExistingCategory() throws Exception {
         CreateCategoryResult categoryResponse = createCategory("New Category", null);
 
-        ProductDto createRequest = productWithStandardPrice("New Product", categoryResponse.getResponse().getId());
+        ProductRequest createRequest = productWithStandardPrice("New Product", categoryResponse.getResponse().getId());
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -124,7 +124,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Test
     public void aReferenceToAnNonExistingCategoryIsRejected() throws Exception {
-        ProductDto createRequest = productWithStandardPrice("New Product", 20000L);
+        ProductRequest createRequest = productWithStandardPrice("New Product", 20000L);
 
         mvc.perform(
                 post("/products")
@@ -134,7 +134,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
                 .andExpect(status().isBadRequest());
     }
 
-    private ProductDto productWithStandardPrice(String name, Long categoryId) {
-        return new ProductDto(name, new BigDecimal("100.00"), "EUR", categoryId);
+    private ProductRequest productWithStandardPrice(String name, Long categoryId) {
+        return new ProductRequest(name, new BigDecimal("100.00"), "EUR", categoryId);
     }
 }
