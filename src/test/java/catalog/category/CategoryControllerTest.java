@@ -63,7 +63,7 @@ public class CategoryControllerTest implements CategoryEndpointMixin {
     public void aCategoryCanBeNestedInAnExistingCategory() throws Exception {
         CreateCategoryResult existingCategory = createCategory("Existing Category", null);
 
-        CreateCategoryResult newCategory = createCategory("New Category", existingCategory.getResponse().getId());
+        createCategory("New Category", existingCategory.getResponse().getId());
 
         CategoryResponseWithSubCategories reloadedExistingCategory = getCategory(existingCategory.getLocation());
 
