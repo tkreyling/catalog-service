@@ -29,12 +29,7 @@ public class ProductController {
     }
 
     private Product mapRequestToDomainObject(ProductRequest productRequest) {
-        Product product = new Product();
-        product.setName(productRequest.getName());
-        product.setPrice(productRequest.getPrice());
-        product.setCurrency(productRequest.getCurrency());
-        product.setCategoryId(productRequest.getCategoryId());
-        return product;
+        return updateAttributes(new Product(), productRequest);
     }
 
     @RequestMapping(value = "{productId}", method = RequestMethod.PUT)
@@ -52,6 +47,9 @@ public class ProductController {
 
     private Product updateAttributes(Product product, ProductRequest productRequest) {
         product.setName(productRequest.getName());
+        product.setPrice(productRequest.getPrice());
+        product.setCurrency(productRequest.getCurrency());
+        product.setCategoryId(productRequest.getCategoryId());
         return product;
     }
 
