@@ -88,29 +88,19 @@ public class ProductControllerTest implements CategoryEndpointMixin {
     @Test
     public void anExistingProductCanBeUpdated() throws Exception {
         ProductRequest createRequest = productWithStandardPrice("old name", null);
-
         CreateProductResult existingProduct = createProduct(createRequest);
 
         ProductRequest updateRequest = productWithStandardPrice("new name", null);
+        ProductResponse productResponse = updateProduct(existingProduct.getLocation(), updateRequest);
 
-        MockHttpServletResponse updateResponse = mvc.perform(
-                put(existingProduct.getLocation())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(updateRequest))
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
-
-        ProductResponse productResponse = objectMapper.readValue(updateResponse.getContentAsString(), ProductResponse.class);
         assertEquals("new name", productResponse.getName());
     }
 
     @Test
     public void aProductCanBeLinkedToAnExistingCategory() throws Exception {
-        CreateCategoryResult categoryResponse = createCategory("New Category", null);
+        CreateCategoryResult category = createCategory("New Category", null);
 
-        ProductRequest createRequest = productWithStandardPrice("New Product", categoryResponse.getResponse().getId());
+        ProductRequest createRequest = productWithStandardPrice("New Product", category.getResponse().getId());
 
         CreateProductResult product = createProduct(createRequest);
 
@@ -156,6 +146,19 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         assertNotEquals(0, productResponse.getId());
 
         return new CreateProductResult(productResponse, createResponse.getHeader(LOCATION));
+    }
+
+    private ProductResponse updateProduct(String location, ProductRequest updateRequest) throws Exception {
+        MockHttpServletResponse updateResponse = mvc.perform(
+                put(location)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(updateRequest))
+        )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        return objectMapper.readValue(updateResponse.getContentAsString(), ProductResponse.class);
     }
 
     private ProductResponse getProduct(String location) throws Exception {
