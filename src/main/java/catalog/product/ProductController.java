@@ -1,13 +1,18 @@
 package catalog.product;
 
+import catalog.exchangerates.ExchangeRateService;
 import lombok.Value;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.net.URI;
+import java.util.Optional;
 
+import static java.math.RoundingMode.HALF_DOWN;
 import static org.springframework.http.ResponseEntity.created;
 import static org.springframework.http.ResponseEntity.notFound;
 
@@ -17,15 +22,17 @@ import static org.springframework.http.ResponseEntity.notFound;
 public class ProductController {
     private final ProductRepository productRepository;
 
+    private final ExchangeRateService exchangeRateService;
+
     @RequestMapping(method = RequestMethod.POST)
     public HttpEntity<?> createProduct(@RequestBody @Valid ProductRequest productRequest) {
-        Product product = mapRequestToDomainObject(productRequest);
-
-        Product savedProduct = productRepository.save(product);
-
-        ProductResponse productResponse = mapDomainObjectToResponse(savedProduct);
-
-        return created(URI.create("/products/" + savedProduct.getId())).body(productResponse);
+        return Optional.of(productRequest)
+                .map(this::mapRequestToDomainObject)
+                .map(productRepository::save)
+                .map(this::readExchangeRateToEuroForProduct)
+                .map(this::mapDomainObjectToResponse)
+                .map(response -> created(URI.create("/products/" + response.getId())).body(response))
+                .get();
     }
 
     private Product mapRequestToDomainObject(ProductRequest productRequest) {
@@ -40,6 +47,7 @@ public class ProductController {
         return productRepository.findById(productId)
                 .map(product -> updateAttributes(product, productRequest))
                 .map(productRepository::save)
+                .map(this::readExchangeRateToEuroForProduct)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
@@ -56,12 +64,26 @@ public class ProductController {
     @RequestMapping(value = "{productId}", method = RequestMethod.GET)
     public HttpEntity<ProductResponse> getProduct(@PathVariable long productId) {
         return productRepository.findById(productId)
+                .map(this::readExchangeRateToEuroForProduct)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private ProductResponse mapDomainObjectToResponse(Product product) {
-        return new ProductResponse(product.getName(), product.getPrice(), product.getCurrency(), product.getCategoryId());
+    private Pair<Product, BigDecimal> readExchangeRateToEuroForProduct(Product product) {
+        return Pair.of(product, exchangeRateService.getLatestExchangeRateToEuro(product.getCurrency()));
+    }
+
+    private ProductResponse mapDomainObjectToResponse(Pair<Product, BigDecimal> productAndExchangeRate) {
+        Product product = productAndExchangeRate.getLeft();
+        BigDecimal exchangeRate = productAndExchangeRate.getRight();
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getCurrency(),
+                product.getPrice().multiply(exchangeRate).setScale(2, HALF_DOWN),
+                product.getCategoryId()
+        );
     }
 }

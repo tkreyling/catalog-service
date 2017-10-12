@@ -3,7 +3,9 @@ package catalog.product;
 import catalog.Application;
 import catalog.category.CategoryEndpointMixin;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import lombok.Getter;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +15,14 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.HttpHeaders.LOCATION;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
 public class ProductControllerTest implements CategoryEndpointMixin {
+
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(8089);
 
     @Autowired
     @Getter
@@ -60,7 +66,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         assertNotNull(productUrl);
 
         MockHttpServletResponse getResponse = mvc.perform(
-                get(productUrl)
+                MockMvcRequestBuilders.get(productUrl)
         )
                 .andExpect(status().isOk())
                 .andReturn()
@@ -70,6 +76,37 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         assertEquals("New Product", productResponse.getName());
         assertEquals(new BigDecimal("100.00"), productResponse.getPrice());
         assertEquals("EUR", productResponse.getCurrency());
+    }
+
+    @Test
+    public void forAProductWithANonEuroCurrencyTheCurrentPriceIsCalculated() throws Exception {
+        stubFor(get(urlEqualTo("/latest?base=GBP&symbol=EUR"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBodyFile("fixer.io.json")
+                ));
+
+        ProductRequest createRequest = new ProductRequest(
+                "Product with GBP price",
+                new BigDecimal("100.00"), "GBP",
+                null
+        );
+
+        MockHttpServletResponse createResponse = mvc.perform(
+                post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(createRequest))
+        )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        ProductResponse productResponse = objectMapper.readValue(createResponse.getContentAsString(), ProductResponse.class);
+
+        assertEquals(new BigDecimal("100.00"), productResponse.getPrice());
+        assertEquals("GBP", productResponse.getCurrency());
+        assertEquals(new BigDecimal("110.82"), productResponse.getPriceInEuro());
     }
 
     @Test
