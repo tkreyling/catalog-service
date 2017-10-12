@@ -26,16 +26,22 @@ public class ExchangeRateServiceTest {
 
     @Test
     public void getLatest() throws Exception {
-        stubFor(get(urlEqualTo("/latest?symbols=GBP"))
+        stubFor(get(urlEqualTo("/latest?base=GBP&symbol=EUR"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBodyFile("fixer.io.json")
                 ));
 
-        ExchangeRateResponse exchangeRateResponse = exchangeRateService.getLatestExchangeRates("GBP");
+        BigDecimal rate = exchangeRateService.getLatestExchangeRateToEuro("GBP");
 
-        assertEquals("EUR", exchangeRateResponse.getBase());
-        assertEquals(new BigDecimal("0.8971"), exchangeRateResponse.getRates().get("GBP"));
+        assertEquals(new BigDecimal("1.1082"), rate);
+    }
+
+    @Test
+    public void getLatestForEuro() throws Exception {
+        BigDecimal rate = exchangeRateService.getLatestExchangeRateToEuro("EUR");
+
+        assertEquals(BigDecimal.ONE, rate);
     }
 }

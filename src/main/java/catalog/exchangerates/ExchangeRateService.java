@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+
 @Service
 public class ExchangeRateService {
 
@@ -15,11 +17,14 @@ public class ExchangeRateService {
         this.host = host;
     }
 
-    public ExchangeRateResponse getLatestExchangeRates(String symbol) {
-        return restTemplate.getForObject(
-                "http://" + host + "/latest?symbols={symbol}",
+    public BigDecimal getLatestExchangeRateToEuro(String currency) {
+        if ("EUR".equals(currency)) return BigDecimal.ONE;
+
+        ExchangeRateResponse exchangeRateResponse = restTemplate.getForObject(
+                "http://" + host + "/latest?base={currency}&symbol=EUR",
                 ExchangeRateResponse.class,
-                symbol
+                currency
         );
+        return exchangeRateResponse.getRates().get("EUR");
     }
 }
