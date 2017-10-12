@@ -66,10 +66,10 @@ public class ProductControllerTest implements CategoryEndpointMixin {
                 .andReturn()
                 .getResponse();
 
-        ProductDto productDto = objectMapper.readValue(getResponse.getContentAsString(), ProductDto.class);
-        assertEquals("New Product", productDto.getName());
-        assertEquals(new BigDecimal("100.00"), productDto.getPrice());
-        assertEquals("EUR", productDto.getCurrency());
+        ProductResponse productResponse = objectMapper.readValue(getResponse.getContentAsString(), ProductResponse.class);
+        assertEquals("New Product", productResponse.getName());
+        assertEquals(new BigDecimal("100.00"), productResponse.getPrice());
+        assertEquals("EUR", productResponse.getCurrency());
     }
 
     @Test
@@ -99,8 +99,8 @@ public class ProductControllerTest implements CategoryEndpointMixin {
                 .andReturn()
                 .getResponse();
 
-        ProductDto productDto = objectMapper.readValue(updateResponse.getContentAsString(), ProductDto.class);
-        assertEquals("new name", productDto.getName());
+        ProductResponse productResponse = objectMapper.readValue(updateResponse.getContentAsString(), ProductResponse.class);
+        assertEquals("new name", productResponse.getName());
     }
 
     @Test
@@ -118,8 +118,8 @@ public class ProductControllerTest implements CategoryEndpointMixin {
                 .andReturn()
                 .getResponse();
 
-        ProductDto productDto = objectMapper.readValue(createResponse.getContentAsString(), ProductDto.class);
-        assertNotNull(productDto.getCategoryId());
+        ProductResponse productResponse = objectMapper.readValue(createResponse.getContentAsString(), ProductResponse.class);
+        assertNotNull(productResponse.getCategoryId());
     }
 
     @Test

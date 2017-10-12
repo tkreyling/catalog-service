@@ -23,7 +23,7 @@ public class ProductController {
 
         Product savedProduct = productRepository.save(product);
 
-        ProductDto productResponse = mapDomainObjectToResponse(savedProduct);
+        ProductResponse productResponse = mapDomainObjectToResponse(savedProduct);
 
         return created(URI.create("/products/" + savedProduct.getId())).body(productResponse);
     }
@@ -38,7 +38,7 @@ public class ProductController {
     }
 
     @RequestMapping(value = "{productId}", method = RequestMethod.PUT)
-    public HttpEntity<ProductDto> updateProduct(
+    public HttpEntity<ProductResponse> updateProduct(
             @PathVariable long productId,
             @RequestBody @Valid ProductRequest productRequest
     ) {
@@ -56,14 +56,14 @@ public class ProductController {
     }
 
     @RequestMapping(value = "{productId}", method = RequestMethod.GET)
-    public HttpEntity<ProductDto> getProduct(@PathVariable long productId) {
+    public HttpEntity<ProductResponse> getProduct(@PathVariable long productId) {
         return productRepository.findById(productId)
                 .map(this::mapDomainObjectToResponse)
                 .map(ResponseEntity::ok)
                 .orElse(notFound().build());
     }
 
-    private ProductDto mapDomainObjectToResponse(Product product) {
-        return new ProductDto(product.getName(), product.getPrice(), product.getCurrency(), product.getCategoryId());
+    private ProductResponse mapDomainObjectToResponse(Product product) {
+        return new ProductResponse(product.getName(), product.getPrice(), product.getCurrency(), product.getCategoryId());
     }
 }
