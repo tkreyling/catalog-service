@@ -3,6 +3,7 @@ package catalog.product;
 import catalog.Application;
 import catalog.category.CategoryEndpointMixin;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import lombok.Getter;
 import lombok.Value;
@@ -16,15 +17,13 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.math.BigDecimal;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.springframework.http.HttpHeaders.LOCATION;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,14 +56,8 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
         CreateProductResult createResponse = createProduct(createRequest);
 
-        MockHttpServletResponse getResponse = mvc.perform(
-                MockMvcRequestBuilders.get(createResponse.getLocation())
-        )
-                .andExpect(status().isOk())
-                .andReturn()
-                .getResponse();
+        ProductResponse productResponse = getProduct(createResponse.getLocation());
 
-        ProductResponse productResponse = objectMapper.readValue(getResponse.getContentAsString(), ProductResponse.class);
         assertEquals("New Product", productResponse.getName());
         assertEquals(new BigDecimal("100.00"), productResponse.getPrice());
         assertEquals("EUR", productResponse.getCurrency());
@@ -72,7 +65,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Test
     public void forAProductWithANonEuroCurrencyTheCurrentPriceIsCalculated() throws Exception {
-        stubFor(get(urlEqualTo("/latest?base=GBP&symbol=EUR"))
+        stubFor(WireMock.get(urlEqualTo("/latest?base=GBP&symbol=EUR"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -163,5 +156,14 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         assertNotEquals(0, productResponse.getId());
 
         return new CreateProductResult(productResponse, createResponse.getHeader(LOCATION));
+    }
+
+    private ProductResponse getProduct(String location) throws Exception {
+        MockHttpServletResponse getResponse = mvc.perform(get(location))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        return objectMapper.readValue(getResponse.getContentAsString(), ProductResponse.class);
     }
 }
