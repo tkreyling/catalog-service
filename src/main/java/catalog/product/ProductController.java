@@ -31,6 +31,8 @@ public class ProductController {
     private Product mapRequestToDomainObject(ProductDto productDto) {
         Product product = new Product();
         product.setName(productDto.getName());
+        product.setPrice(productDto.getPrice());
+        product.setCurrency(productDto.getCurrency());
         product.setCategoryId(productDto.getCategoryId());
         return product;
     }
@@ -62,6 +64,6 @@ public class ProductController {
     }
 
     private ProductDto mapDomainObjectToResponse(Product product) {
-        return new ProductDto(product.getName(), product.getCategoryId());
+        return new ProductDto(product.getName(), product.getPrice(), product.getCurrency(), product.getCategoryId());
     }
 }

@@ -14,6 +14,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.HttpHeaders.LOCATION;
@@ -43,7 +45,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Test
     public void theCatalogRetainsANewProduct() throws Exception {
-        ProductDto createRequest = new ProductDto("New Product", null);
+        ProductDto createRequest = productWithStandardPrice("New Product", null);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -66,11 +68,13 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
         ProductDto productDto = objectMapper.readValue(getResponse.getContentAsString(), ProductDto.class);
         assertEquals("New Product", productDto.getName());
+        assertEquals(new BigDecimal("100.00"), productDto.getPrice());
+        assertEquals("EUR", productDto.getCurrency());
     }
 
     @Test
     public void anExistingProductCanBeUpdated() throws Exception {
-        ProductDto createRequest = new ProductDto("old name", null);
+        ProductDto createRequest = productWithStandardPrice("old name", null);
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -84,7 +88,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
         String productUrl = createResponse.getHeader(LOCATION);
         assertNotNull(productUrl);
 
-        ProductDto updateRequest = new ProductDto("new name", null);
+        ProductDto updateRequest = productWithStandardPrice("new name", null);
 
         MockHttpServletResponse updateResponse = mvc.perform(
                 put(productUrl)
@@ -103,7 +107,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
     public void aProductCanBeLinkedToAnExistingCategory() throws Exception {
         CreateCategoryResult categoryResponse = createCategory("New Category", null);
 
-        ProductDto createRequest = new ProductDto("New Product", categoryResponse.getResponse().getId());
+        ProductDto createRequest = productWithStandardPrice("New Product", categoryResponse.getResponse().getId());
 
         MockHttpServletResponse createResponse = mvc.perform(
                 post("/products")
@@ -120,7 +124,7 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     @Test
     public void aReferenceToAnNonExistingCategoryIsRejected() throws Exception {
-        ProductDto createRequest = new ProductDto("New Product", 20000L);
+        ProductDto createRequest = productWithStandardPrice("New Product", 20000L);
 
         mvc.perform(
                 post("/products")
@@ -128,5 +132,9 @@ public class ProductControllerTest implements CategoryEndpointMixin {
                         .content(objectMapper.writeValueAsBytes(createRequest))
         )
                 .andExpect(status().isBadRequest());
+    }
+
+    private ProductDto productWithStandardPrice(String name, Long categoryId) {
+        return new ProductDto(name, new BigDecimal("100.00"), "EUR", categoryId);
     }
 }
