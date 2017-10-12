@@ -2,13 +2,14 @@ package catalog.exchangerates;
 
 import catalog.Application;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.math.BigDecimal;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
@@ -35,6 +36,6 @@ public class ExchangeRateServiceTest {
         ExchangeRateResponse exchangeRateResponse = exchangeRateService.getLatestExchangeRates("GBP");
 
         assertEquals("EUR", exchangeRateResponse.getBase());
-        assertEquals(0.8971, exchangeRateResponse.getRates().get("GBP"), 0.0001);
+        assertEquals(new BigDecimal("0.8971"), exchangeRateResponse.getRates().get("GBP"));
     }
 }
