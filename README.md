@@ -19,4 +19,4 @@ as described in [this paper](http://fungus.teststation.com/~jon/treehandling/Tre
 ## Price conversion
 
 The price conversion to Euro is done on the fly for every request. 
-Performance and resilience could be improved by replicating exchange rate to the service data store.
+Performance and resilience could be improved by replicating the exchange rates regularly to the service data store.
