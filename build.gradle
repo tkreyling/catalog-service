@@ -47,4 +47,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
     testCompile "org.springframework.boot:spring-boot-starter-test"
+
+    testCompile "com.github.tomakehurst:wiremock:2.8.0"
 }
