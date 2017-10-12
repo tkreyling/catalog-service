@@ -5,6 +5,7 @@ import catalog.category.CategoryEndpointMixin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import lombok.Getter;
+import lombok.Value;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.HttpHeaders.LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,20 +55,10 @@ public class ProductControllerTest implements CategoryEndpointMixin {
     public void theCatalogRetainsANewProduct() throws Exception {
         ProductRequest createRequest = productWithStandardPrice("New Product", null);
 
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
-
-        String productUrl = createResponse.getHeader(LOCATION);
-        assertNotNull(productUrl);
+        CreateProductResult createResponse = createProduct(createRequest);
 
         MockHttpServletResponse getResponse = mvc.perform(
-                MockMvcRequestBuilders.get(productUrl)
+                MockMvcRequestBuilders.get(createResponse.getLocation())
         )
                 .andExpect(status().isOk())
                 .andReturn()
@@ -93,42 +85,23 @@ public class ProductControllerTest implements CategoryEndpointMixin {
                 null
         );
 
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
+        CreateProductResult product = createProduct(createRequest);
 
-        ProductResponse productResponse = objectMapper.readValue(createResponse.getContentAsString(), ProductResponse.class);
-
-        assertEquals(new BigDecimal("100.00"), productResponse.getPrice());
-        assertEquals("GBP", productResponse.getCurrency());
-        assertEquals(new BigDecimal("110.82"), productResponse.getPriceInEuro());
+        assertEquals(new BigDecimal("100.00"), product.getResponse().getPrice());
+        assertEquals("GBP", product.getResponse().getCurrency());
+        assertEquals(new BigDecimal("110.82"), product.getResponse().getPriceInEuro());
     }
 
     @Test
     public void anExistingProductCanBeUpdated() throws Exception {
         ProductRequest createRequest = productWithStandardPrice("old name", null);
 
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
-
-        String productUrl = createResponse.getHeader(LOCATION);
-        assertNotNull(productUrl);
+        CreateProductResult existingProduct = createProduct(createRequest);
 
         ProductRequest updateRequest = productWithStandardPrice("new name", null);
 
         MockHttpServletResponse updateResponse = mvc.perform(
-                put(productUrl)
+                put(existingProduct.getLocation())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsBytes(updateRequest))
         )
@@ -146,17 +119,9 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
         ProductRequest createRequest = productWithStandardPrice("New Product", categoryResponse.getResponse().getId());
 
-        MockHttpServletResponse createResponse = mvc.perform(
-                post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(createRequest))
-        )
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse();
+        CreateProductResult product = createProduct(createRequest);
 
-        ProductResponse productResponse = objectMapper.readValue(createResponse.getContentAsString(), ProductResponse.class);
-        assertNotNull(productResponse.getCategoryId());
+        assertNotNull(product.getResponse().getCategoryId());
     }
 
     @Test
@@ -173,5 +138,30 @@ public class ProductControllerTest implements CategoryEndpointMixin {
 
     private ProductRequest productWithStandardPrice(String name, Long categoryId) {
         return new ProductRequest(name, new BigDecimal("100.00"), "EUR", categoryId);
+    }
+
+    @Value
+    class CreateProductResult {
+        ProductResponse response;
+        String location;
+    }
+
+    private CreateProductResult createProduct(ProductRequest createRequest) throws Exception {
+        MockHttpServletResponse createResponse = mvc.perform(
+                post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsBytes(createRequest))
+        )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse();
+
+        ProductResponse productResponse = objectMapper.readValue(
+                createResponse.getContentAsString(), ProductResponse.class);
+
+        assertNotNull(createResponse.getHeader(LOCATION));
+        assertNotEquals(0, productResponse.getId());
+
+        return new CreateProductResult(productResponse, createResponse.getHeader(LOCATION));
     }
 }
